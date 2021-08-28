@@ -1,9 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "hardhat/console.sol";
-
-
 contract CryptoMarriage {
 
     // Persons
@@ -88,7 +85,7 @@ contract CryptoMarriage {
     }
 
     // Divorce
-    function divorce() public onlyPersons {
+    function divorce() public onlyPersons onlyIfMarried {
         if (msg.sender == persons[0].addr) {
             persons[0].ido = false;
         } else {

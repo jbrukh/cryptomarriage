@@ -102,35 +102,28 @@ describe("CryptoMarriage", function () {
       expect(await cryptoMarriage.married()).to.be.false;
     });
 
-    it("Should revert status if both divorces", async function() {
-      await cryptoMarriage.connect(bride).divorce();
-      await cryptoMarriage.connect(groom).divorce();
-      expect(await cryptoMarriage.married()).to.be.false;
-    });
-
     it("Only bridge and groom can call divorce", async function() {
       await expect(cryptoMarriage.connect(witness1).divorce()).to.be.revertedWith('Only bride and groom can call this.');
     });
   });
 
   describe("Events", async function() {
+
     it("Should emit a Marriage event upon marriage", async function() {
       await cryptoMarriage.connect(bride).ido();
       let tx = cryptoMarriage.connect(groom).ido();
 
-      expect(tx).to.emit(cryptoMarriage, 'Marriage').withArgs(bride.address, name1, groom.address, name2);
+      await expect(tx).to.emit(cryptoMarriage, 'Marriage').withArgs(bride.address, name1, groom.address, name2);
     });
 
     it("Should emit a Divorce event upon divorce", async function() {
       await cryptoMarriage.connect(bride).ido();
       await cryptoMarriage.connect(groom).ido();
+      expect(await cryptoMarriage.married()).to.be.true;
 
       let tx = cryptoMarriage.connect(bride).divorce();
       await expect(tx).to.emit(cryptoMarriage, 'Divorce').withArgs(bride.address, name1, groom.address, name2);
       expect(await cryptoMarriage.married()).to.be.false;
-
-      // second call doesn't cause an event
-      await expect(cryptoMarriage.connect(groom).divorce()).not.to.emit(cryptoMarriage, 'Divorce');
     });
   });
 
