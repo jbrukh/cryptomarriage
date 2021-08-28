@@ -156,7 +156,23 @@ describe("CryptoMarriage", function () {
     });
   });
 
-
+  describe("Witnessing", async function() {
+    beforeEach(async function() {
+      await cryptoMarriage.connect(bride).ido();
+      await cryptoMarriage.connect(groom).ido();
+    });
+    it("should account a witness", async function() {
+      await cryptoMarriage.connect(witness1).witness(name3);
+      let p = await cryptoMarriage.witnesses(0);
+      expect(p.addr).to.equal(witness1.address);
+      expect(p.name).to.equal(name3);
+    });
+    it("should not allow a witness to call the method twice", async function() {
+      await cryptoMarriage.connect(witness1).witness(name3);
+      let tx = cryptoMarriage.connect(witness1).witness(name3);
+      await expect(tx).to.be.revertedWith("Witness already witnessed.");
+    });
+  });
 
 });
 

@@ -21,7 +21,8 @@ contract CryptoMarriage {
     Person[2] public persons;
 
     // Witnesses
-    mapping (address => Witness) public witnesses;
+    mapping (address => Witness) private witnessMap;
+    Witness[] public witnesses;
 
     // State
     bool public married = false;
@@ -69,6 +70,11 @@ contract CryptoMarriage {
         _;
     }
 
+    modifier onlyIfNewWitness {
+        require(witnessMap[msg.sender].addr == address(0), "Witness already witnessed.");
+        _;
+    }
+
     // I do
     function ido() public onlyPersons onlyIfNotMarried onlyIfNotDivorced {        
         if (msg.sender == persons[0].addr) {
@@ -102,8 +108,10 @@ contract CryptoMarriage {
     }
 
     // Witness
-    function witness(string memory name) public onlyIfMarried onlyInWitnessingWindow {
-        witnesses[msg.sender] = Witness(msg.sender, name, block.number);
+    function witness(string memory name) public onlyIfMarried onlyInWitnessingWindow onlyIfNewWitness {
+        Witness memory w = Witness(msg.sender, name, block.number);
+        witnessMap[msg.sender] = w;
+        witnesses.push(w);
         emit Witnessing(persons[0].addr, persons[0].name, persons[1].addr, persons[1].name, msg.sender, name);
     }
 

@@ -17,6 +17,8 @@ async function main() {
   const CryptoMarriage = await hre.ethers.getContractFactory("CryptoMarriage");
   let cryptoMarriage = await CryptoMarriage.deploy('0x6a6134989bB133950fFf5038Ec2dE2858dcbd4e8', 'Roxette Sklavos', '0x094A05706b4d3274Ce58Fef838E73b246bbcB5a9', 'Jake Brukhman', 10000);
 
+  await cryptoMarriage.deployed();
+  
   console.log("CryptoMarriage deployed to:", cryptoMarriage.address);
 }
 
