@@ -23,7 +23,7 @@ describe("CryptoMarriage", function () {
 
 
   beforeEach(async function() {
-    cryptoMarriage = await CryptoMarriage.deploy(bride.address, name1, groom.address, name2);
+    cryptoMarriage = await CryptoMarriage.deploy(bride.address, name1, groom.address, name2, 10000);
     await cryptoMarriage.deployed();
   });
 
@@ -119,6 +119,18 @@ describe("CryptoMarriage", function () {
       let tx = cryptoMarriage.connect(groom).ido();
 
       expect(tx).to.emit(cryptoMarriage, 'Marriage').withArgs(bride.address, name1, groom.address, name2);
+    });
+
+    it("Should emit a Divorce event upon divorce", async function() {
+      await cryptoMarriage.connect(bride).ido();
+      await cryptoMarriage.connect(groom).ido();
+
+      let tx = cryptoMarriage.connect(bride).divorce();
+      await expect(tx).to.emit(cryptoMarriage, 'Divorce').withArgs(bride.address, name1, groom.address, name2);
+      expect(await cryptoMarriage.married()).to.be.false;
+
+      // second call doesn't cause an event
+      await expect(cryptoMarriage.connect(groom).divorce()).not.to.emit(cryptoMarriage, 'Divorce');
     });
   });
 
