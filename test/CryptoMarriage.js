@@ -14,6 +14,7 @@ describe("CryptoMarriage", function () {
   let name2 = "John Groom";
   let name3 = "John Witness";
   let name4 = "Jane Witness";
+  let uri = "https://gateway.pinata.cloud/ipfs/QmSeo6qDjaZYmcZwSeyM7nbDBSBZan12aTMAT3sqwo9PeR";
     
   before(async function() {
     // signers
@@ -23,7 +24,7 @@ describe("CryptoMarriage", function () {
 
 
   beforeEach(async function() {
-    cryptoMarriage = await CryptoMarriage.deploy(bride.address, name1, groom.address, name2, 10000);
+    cryptoMarriage = await CryptoMarriage.deploy(bride.address, name1, groom.address, name2, 10000, uri, uri, 'NFT', 'NFT');
     await cryptoMarriage.deployed();
   });
 
@@ -125,6 +126,25 @@ describe("CryptoMarriage", function () {
       await expect(tx).to.emit(cryptoMarriage, 'Divorce').withArgs(bride.address, name1, groom.address, name2);
       expect(await cryptoMarriage.married()).to.be.false;
     });
+
+  });
+
+  describe("NFTs", async function() {
+    it("Should send NFTs when married", async function() {
+      await cryptoMarriage.connect(bride).ido();
+      await cryptoMarriage.connect(groom).ido();
+
+      expect(await cryptoMarriage.ownerOf(1)).to.be.equal(bride.address);
+      expect(await cryptoMarriage.ownerOf(2)).to.be.equal(groom.address);
+    });
+
+    it("Should send NFTs when witnessing", async function() {
+      await cryptoMarriage.connect(bride).ido();
+      await cryptoMarriage.connect(groom).ido();
+      await cryptoMarriage.connect(witness1).witness(name3);
+      expect(await cryptoMarriage.ownerOf(3)).to.be.equal(witness1.address);
+    });
+
   });
 
   describe("When divorced", async function() {
@@ -161,34 +181,21 @@ describe("CryptoMarriage", function () {
       await cryptoMarriage.connect(bride).ido();
       await cryptoMarriage.connect(groom).ido();
     });
-    it("should account a witness", async function() {
+    it("Should account a witness", async function() {
       await cryptoMarriage.connect(witness1).witness(name3);
       let p = await cryptoMarriage.witnesses(0);
       expect(p.addr).to.equal(witness1.address);
       expect(p.name).to.equal(name3);
     });
-    it("should not allow a witness to call the method twice", async function() {
+    it("Should not allow a witness to call the method twice", async function() {
       await cryptoMarriage.connect(witness1).witness(name3);
       let tx = cryptoMarriage.connect(witness1).witness(name3);
       await expect(tx).to.be.revertedWith("Witness already witnessed.");
     });
+    it("Should event a Witnessing event", async function() {
+      let tx = cryptoMarriage.connect(witness1).witness(name3);
+      await expect(tx).to.emit(cryptoMarriage, 'Witnessing').withArgs(bride.address, name1, groom.address, name2, witness1.address, name3);
+    });
   });
 
 });
-
-// describe("CryptoMarriage", async function () {
-
-//   let [bride, groom, witness1, witness2] = await ethers.getSigners();
-//   let [name1, name2, name3, name4] = ["Jane Bride", "John Groom", "John Witness", "Jane Witness"]; 
-
-//   const CryptoMarriage = await ethers.getContractFactory("CryptoMarriage");
-//   const cryptoMarriage = await CryptoMarriage.deploy(addr1, name1, addr2, name2);
-//   await cryptoMarriage.deployed();
-  
-//   it("should show unmarried state", async function() {
-//     expect(await cryptoMarriage.married).to.equal(false);
-//   });
-
-
-
-// });

@@ -1,7 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-contract CryptoMarriage {
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
+
+contract CryptoMarriage is ERC721URIStorage {
+
+    using Counters for Counters.Counter;
+    Counters.Counter private _tokenIds;
 
     // Persons
     struct Person {
@@ -29,6 +35,8 @@ contract CryptoMarriage {
     uint public witnessBlocks;
     bool private divorced = false;
     uint private marriageBlock = 0;
+    string private personTokenURI;
+    string private witnessTokenURI;
 
     // Events
     event Marriage(address addr1, string name1, address addr2, string name2);
@@ -36,10 +44,22 @@ contract CryptoMarriage {
     event Divorce(address addr1, string name1, address addr2, string name2);
     
     // Constructor
-    constructor(address _addr1, string memory _name1, address _addr2, string memory _name2, uint _witnessBlocks) {
+    constructor(
+        address _addr1,
+        string memory _name1,
+        address _addr2,
+        string memory _name2,
+        uint _witnessBlocks,
+        string memory _personTokenURI,
+        string memory _witnessTokenURI, 
+        string memory _tokenName,
+        string memory _tokenSymbol
+        ) ERC721(_tokenName, _tokenSymbol) {
         persons[0] = Person(_addr1, _name1, false);
         persons[1] = Person(_addr2, _name2, false);
         witnessBlocks = _witnessBlocks;
+        personTokenURI = _personTokenURI;
+        witnessTokenURI = _witnessTokenURI;
     }
 
     modifier onlyPersons {
@@ -86,6 +106,8 @@ contract CryptoMarriage {
         if (marriageBlock == 0 && persons[0].ido && persons[1].ido) {
             married = true;
             marriageBlock = block.number;
+            _mintNFT(persons[0].addr, personTokenURI);
+            _mintNFT(persons[1].addr, personTokenURI);
             emit Marriage(persons[0].addr, persons[0].name, persons[1].addr, persons[1].name);
         }
     }
@@ -112,7 +134,20 @@ contract CryptoMarriage {
         Witness memory w = Witness(msg.sender, name, block.number);
         witnessMap[msg.sender] = w;
         witnesses.push(w);
+        _mintNFT(msg.sender, witnessTokenURI);
         emit Witnessing(persons[0].addr, persons[0].name, persons[1].addr, persons[1].name, msg.sender, name);
+    }
+
+    // mint
+    function _mintNFT(address recipient, string memory uri) private returns (uint256)
+    {
+        _tokenIds.increment();
+
+        uint256 newItemId = _tokenIds.current();
+        _mint(recipient, newItemId);
+        _setTokenURI(newItemId, uri);
+
+        return newItemId;
     }
 
 }
